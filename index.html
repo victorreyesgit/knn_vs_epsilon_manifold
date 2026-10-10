@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Manifold Neighborhoods Explorer</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<button id="panel-toggle" aria-label="Toggle controls">Controls</button>
+
+<div id="panel">
+  <div class="panel-header">
+    <h1>Manifold Neighborhoods Explorer</h1>
+    <p class="subtitle">A smoothly curved surface <span class="mono">z = A·sin(k₁u)·cos(k₂v)</span> — ε-balls, k-NN, and area-calibrated closeness-balls, all using ambient (straight-line) distance</p>
+  </div>
+
+  <div class="section">
+    <h2>Capture</h2>
+    <button id="capture-photo" class="btn-secondary full">📷 Take Photo</button>
+    <button id="capture-video" class="btn-secondary full" style="margin-top:8px;">⏺ Record Video</button>
+  </div>
+
+  <div class="section">
+    <h2>Show / Hide</h2>
+
+    <h3 class="group-label">Manifold</h3>
+    <div class="check-grid">
+      <label class="check"><input type="checkbox" id="vis-surface" checked><span class="swatch" style="background:#8892a0"></span>Manifold</label>
+      <label class="check"><input type="checkbox" id="vis-points" checked><span class="swatch" style="background:#888c96"></span>Sample points</label>
+      <label class="check"><input type="checkbox" id="vis-point" checked><span class="swatch" style="background:#ff4d4d"></span>Reference point c</label>
+      <label class="check"><input type="checkbox" id="vis-ambient"><span class="swatch" style="background:#ff8c2b"></span>Ambient sphere</label>
+    </div>
+
+    <h3 class="group-label">Geometry</h3>
+    <div class="check-grid">
+      <label class="check"><input type="checkbox" id="vis-eps"><span class="swatch" style="background:#ff8c2b"></span>ε ball</label>
+      <label class="check"><input type="checkbox" id="vis-eps-neigh"><span class="swatch" style="background:#ff8c2b"></span>ε-neighborhood</label>
+      <label class="check"><input type="checkbox" id="vis-closeness"><span class="swatch" style="background:#ff33cc"></span>Closeness-ball</label>
+      <label class="check"><input type="checkbox" id="vis-knn"><span class="swatch" style="background:#ff33cc"></span>k-NN points</label>
+    </div>
+
+    <h3 class="group-label">Spatial reference</h3>
+    <div class="check-grid">
+      <label class="check"><input type="checkbox" id="vis-axes" checked><span class="swatch" style="background:#e6e6e6"></span>Ambient axis</label>
+      <label class="check"><input type="checkbox" id="vis-grid"><span class="swatch" style="background:#2b2f3a"></span>Floor frame</label>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Geometry parameters</h2>
+    <div class="slider-row">
+      <label for="eps">ε (ball radius)</label>
+      <input type="range" id="eps" min="0.05" max="2.5" step="0.02" value="1.0">
+      <output id="eps-val"></output>
+    </div>
+    <div class="slider-row">
+      <label for="k">k (neighbors)</label>
+      <input type="range" id="k" min="1" max="200" step="1" value="20">
+      <output id="k-val"></output>
+    </div>
+    <div class="slider-row">
+      <label for="p">p (area fraction)</label>
+      <input type="range" id="p" min="0" max="1" step="0.005" value="0.02">
+      <output id="p-val"></output>
+    </div>
+    <button id="fit-p" class="btn-secondary full">Fit p = (k+½)/N</button>
+  </div>
+
+  <div class="section">
+    <h2>Sample points</h2>
+    <div class="slider-row">
+      <label for="numPoints">Count (N)</label>
+      <input type="range" id="numPoints" min="100" max="5000" step="50" value="1000">
+      <output id="numPoints-val"></output>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Manifold shape</h2>
+    <div class="slider-row">
+      <label for="amp">Amplitude A</label>
+      <input type="range" id="amp" min="-2" max="2" step="0.02" value="1">
+      <output id="amp-val"></output>
+    </div>
+    <div class="slider-row">
+      <label for="kx">Freq. k₁ (u)</label>
+      <input type="range" id="kx" min="0.2" max="2.5" step="0.02" value="0.5">
+      <output id="kx-val"></output>
+    </div>
+    <div class="slider-row">
+      <label for="ky">Freq. k₂ (v)</label>
+      <input type="range" id="ky" min="0.2" max="2.5" step="0.02" value="0.5">
+      <output id="ky-val"></output>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Reference point c <span class="hint">(or click the surface)</span></h2>
+    <div class="slider-row">
+      <label for="u0">u₀</label>
+      <input type="range" id="u0" min="-4.5" max="4.5" step="0.01" value="0.7">
+      <output id="u0-val"></output>
+    </div>
+    <div class="slider-row">
+      <label for="v0">v₀</label>
+      <input type="range" id="v0" min="-4.5" max="4.5" step="0.01" value="-0.5">
+      <output id="v0-val"></output>
+    </div>
+    <button id="reset-point" class="btn-secondary">Reset to origin</button>
+  </div>
+
+  <div class="section">
+    <h2>At c</h2>
+    <div class="readout" id="readout">—</div>
+  </div>
+
+  <div class="section legend">
+    <h2>Legend</h2>
+    <ul>
+      <li><span class="swatch" style="background:#888c96"></span>Sample points — N points scattered on the manifold</li>
+      <li><span class="swatch" style="background:#ff4d4d"></span>Reference point c — movable, or click the surface</li>
+      <li><span class="swatch" style="background:#ff8c2b"></span>ε ball &amp; ε-neighborhood — the border of the ambient ball of radius ε on the manifold, and the sample points inside it (same color)</li>
+      <li><span class="swatch" style="background:#ff33cc"></span>Closeness-ball &amp; k-NN points — the border of the ball whose radius is found numerically so it encloses a fraction p of the manifold's area, and the k sample points closest to c (same color)</li>
+    </ul>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
